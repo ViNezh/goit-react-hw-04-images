@@ -1,13 +1,13 @@
 import { Component } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Searchbar from './Searchbar/searchbar';
+import { Searchbar } from './Searchbar/searchbar';
 import { ImageGallery } from './ImageGallery/imagegallery';
 import { ImageGalleryItem } from './ImageGalleryItem/ImageGalleryItem';
 import { Button } from './Button/button';
 import { fetchImages } from './Api/api';
 import { Loader } from './Loader/loader';
-import Modal from './Modal/modal';
+import { Modal } from './Modal/modal';
 
 class App extends Component {
   state = {
@@ -30,11 +30,6 @@ class App extends Component {
     if (prevQuery !== searchQuery || prevPage !== currentPage) {
       this.fetchQuery();
     }
-    // Після завантаження нових карток автоматично прокручуємо екран вниз
-    // const { images } = this.state;
-    // if (images.length > prevState.images.length) {
-    //   this.scrolling();
-    // }
   }
   // Функція обробки форми з пошуковим запитом
   searchSubmit = searchQuery => {
@@ -77,18 +72,6 @@ class App extends Component {
       this.setState({ isLoading: false });
     }
   };
-
-  // Функція прокручування вмісту екрану до кнопки load more, якщо вона показана, або до кінця галереї
-  // scrolling = () => {
-  //   const btnLoadMore = document.querySelector('#loadMore');
-  //   if (btnLoadMore) {
-  //     btnLoadMore.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  //   }
-  //   const lastImage = document.querySelector('#ImageGallery').lastElementChild;
-  //   if (!btnLoadMore) {
-  //     lastImage.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  //   }
-  // };
 
   // Функція виклику модального вікна
   handleImageClick = largeImageURL => {

@@ -1,35 +1,34 @@
 import css from './modal.module.css';
-import { Component } from 'react';
+import { useEffect } from 'react';
 
-export default class Modal extends Component {
+export const Modal = ({ onClose, largeImage }) => {
   // Прослуховування події натискання клавіши ESC при відкритому модальному вікні
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeydown);
-  }
-  // Скидання прослуховування події натискання клавіши ESC при закритті модального вікна
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeydown);
-  }
-  // Функція обробки натискання клавіши ESC
-  handleKeydown = evt => {
-    if (evt.code === 'Escape') {
-      this.props.onClose();
-    }
-  };
+
+  useEffect(() => {
+    const handleKeydown = evt => {
+      if (evt.code === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => {
+      window.removeEventListener('keydown', handleKeydown);
+    };
+  }, [onClose]);
+
   // Функція обробки кліку мишкою по back drop
-  handleBackdropClick = evt => {
+  const handleBackdropClick = evt => {
     if (evt.currentTarget === evt.target) {
-      this.props.onClose();
+      onClose();
     }
   };
 
-  render() {
-    return (
-      <div className={css.Overlay} onClick={this.handleBackdropClick}>
-        <div className={css.Modal}>
-          <img src={this.props.largeImage} alt="" />
-        </div>
+  return (
+    <div className={css.Overlay} onClick={handleBackdropClick}>
+      <div className={css.Modal}>
+        <img src={largeImage} alt="" />
       </div>
-    );
-  }
-}
+    </div>
+  );
+};

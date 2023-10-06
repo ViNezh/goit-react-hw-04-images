@@ -1,55 +1,51 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 import css from './searchbar.module.css';
 
-class Searchbar extends Component {
-  state = {
-    searchQuery: '',
-  };
+export const Searchbar = ({ handleSubmit }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Функція фіксації змін в полі input
-  onInputChange = evt => {
-    this.setState({ searchQuery: evt.currentTarget.value.toLowerCase() });
+  const onInputChange = evt => {
+    setSearchQuery(evt.currentTarget.value.toLowerCase());
   };
   // Функція обробки відправки форми
-  onSubmit = evt => {
+  const onSubmit = evt => {
     evt.preventDefault();
     // Якщо поле порожне (з урахуванням пробілів) форма не відправиться, викликається повідомлення про помилку
-    if (this.state.searchQuery.trim() === '') {
+    if (searchQuery.trim() === '') {
       toast.error('Enter a search query.');
       return;
     }
-    this.props.handleSubmit(this.state.searchQuery);
-    this.resetForm();
+    handleSubmit(searchQuery);
+    resetForm();
   };
   // Функція очищення поля вводу після відправки форми
-  resetForm = () => {
-    this.setState({ searchQuery: '' });
+  const resetForm = () => {
+    setSearchQuery('');
   };
 
-  render() {
-    return (
-      <header className={css.Searchbar}>
-        <form className={css.SearchForm} onSubmit={this.onSubmit}>
-          <button
-            type="submit"
-            className={css.button}
-            aria-label="Submit search query"
-          >
-            <span className={css.buttonLabel}></span>
-          </button>
+  return (
+    <header className={css.Searchbar}>
+      <form className={css.SearchForm} onSubmit={onSubmit}>
+        <button
+          type="submit"
+          className={css.button}
+          aria-label="Submit search query"
+        >
+          <span className={css.buttonLabel}></span>
+        </button>
 
-          <input
-            className={css.input}
-            type="text"
-            autoComplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-            value={this.state.searchQuery}
-            onChange={this.onInputChange}
-          />
-        </form>
-      </header>
-    );
-  }
-}
-export default Searchbar;
+        <input
+          className={css.input}
+          type="text"
+          autoComplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+          value={searchQuery}
+          onChange={onInputChange}
+        />
+      </form>
+    </header>
+  );
+};
