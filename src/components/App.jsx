@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Searchbar } from './Searchbar/searchbar';
@@ -9,116 +9,105 @@ import { fetchImages } from './Api/api';
 import { Loader } from './Loader/loader';
 import { Modal } from './Modal/modal';
 
-class App extends Component {
-  state = {
-    searchQuery: '',
-    currentPage: 1,
-    images: [],
-    totalHits: 0,
-    error: null,
-    isLoading: false,
-    isModal: false,
-    largeImageURL: '',
-  };
-  // При оновленні state наповнюємо галерею картками
-  componentDidUpdate(prevProps, prevState) {
-    const { searchQuery, currentPage } = this.state;
-    const prevQuery = prevState.searchQuery;
-    const prevPage = prevState.currentPage;
+const App = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [totalHits, setTotalHits] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isModal, setIsModal] = useState(false);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  // За допомогою хука useRef будемо забороняти api запит карток при першому рендерингу
+  const hasSearchRef = useRef(false);
+  // При зміні запиту або номеру сторінки наповнюємо галерею картками
+  useEffect(() => {
+    if (!hasSearchRef.current) return;
+    const fetchQuery = async () => {
+      try {
+        //Показуємо loader
+        setIsLoading(true);
+        // Викликаємо функцію http запиту
+        const data = await fetchImages(searchQuery, currentPage);
+        // Якщо отримаємо порожній масив, просимо ввести валідний пошуковий запит
+        if (data.hits.length === 0) {
+          toast.error('Enter valid search query');
+          return;
+        }
+        setImages(prevImages => [...prevImages, ...data.hits]);
+        setTotalHits(data.totalHits);
+      } catch (error) {
+        toast.error(
+          'Unfortunately something went wrong. Please reload the page.'
+        );
+        // Ховаємо loader після виконання http запиту
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchQuery();
+  }, [searchQuery, currentPage]);
 
-    // При новому слові запиту, викликаємо функцію нового запиту
-    if (prevQuery !== searchQuery || prevPage !== currentPage) {
-      this.fetchQuery();
-    }
-  }
-  // Функція обробки форми з пошуковим запитом
-  searchSubmit = searchQuery => {
-    this.setState({
-      searchQuery,
-      currentPage: 1,
-      images: [],
-      totalHits: 0,
-    });
-  };
   // Функція зміни номеру сторінки після натискання кнопки Load more
-  addPage = () => {
-    this.setState(prevState => ({ currentPage: prevState.currentPage + 1 }));
+  const addPage = () => {
+    setCurrentPage(prevPage => prevPage + 1);
   };
   // Функція отримання інформації з backend при новому пошуковому запиті
-  fetchQuery = async newQuery => {
-    const { searchQuery, currentPage } = this.state;
-    try {
-      //Показуємо loader
-      this.setState({ isLoading: true });
-      // Викликаємо функцію http запиту
-      const data = await fetchImages(searchQuery, currentPage);
-      // Якщо отримаємо порожній масив, просимо ввести валідний пошуковий запит
-      if (data.hits.length === 0) {
-        toast.error('Enter valid search query');
-        return;
-      }
-      this.setState(prevState => ({
-        images: [...prevState.images, ...data.hits],
-        totalHits: data.totalHits,
-        error: null,
-      }));
-    } catch (error) {
-      this.setState({ error: error.message });
-      toast.error(
-        'Unfortunately something went wrong. Please reload the page.'
-      );
-      // Ховаємо loader після виконання http запиту
-    } finally {
-      this.setState({ isLoading: false });
-    }
-  };
 
   // Функція виклику модального вікна
-  handleImageClick = largeImageURL => {
-    this.setState({ isModal: true, largeImageURL });
+  const handleImageClick = largeImageURL => {
+    setIsModal(true);
+    setLargeImageURL(largeImageURL);
   };
   // Функція закриття модального вікна
-  handleCloseModal = () => {
-    this.setState({ isModal: false, largeImageURL: '' });
+  const handleCloseModal = () => {
+    setIsModal(false);
+    setLargeImageURL('');
   };
 
-  render() {
-    const { images, totalHits, isLoading, isModal, largeImageURL } = this.state;
-    const isButtonShow = images.length !== totalHits && !isLoading;
-    return (
-      <>
-        <Searchbar handleSubmit={this.searchSubmit} />
-        <ImageGallery>
-          {images.length > 0 &&
-            images.map(image => (
-              <ImageGalleryItem
-                source={image.webformatURL}
-                deskr={image.tags}
-                key={image.id}
-                onClick={() => {
-                  this.handleImageClick(image.largeImageURL);
-                }}
-              />
-            ))}
-        </ImageGallery>
-        {isButtonShow && <Button onClick={this.addPage} />}
-        {isLoading && <Loader />}
-        {isModal && (
-          <Modal onClose={this.handleCloseModal} largeImage={largeImageURL} />
-        )}
-        <ToastContainer
-          position="top-center"
-          autoClose={2000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick={true}
-          rtl={false}
-          draggable
-          pauseOnHover={false}
-          theme="colored"
-        />
-      </>
-    );
-  }
-}
+  // Функція обробки форми з пошуковим запитом
+  const searchSubmit = searchQuery => {
+    setSearchQuery(searchQuery);
+    setCurrentPage(1);
+    setImages([]);
+    setTotalHits(0);
+    hasSearchRef.current = true;
+  };
+
+  const isButtonShow = images.length !== totalHits && !isLoading;
+  return (
+    <>
+      <Searchbar handleSubmit={searchSubmit} />
+      <ImageGallery>
+        {images.length > 0 &&
+          images.map(image => (
+            <ImageGalleryItem
+              source={image.webformatURL}
+              deskr={image.tags}
+              key={image.id}
+              onClick={() => {
+                handleImageClick(image.largeImageURL);
+              }}
+            />
+          ))}
+      </ImageGallery>
+      {isButtonShow && <Button onClick={addPage} />}
+      {isLoading && <Loader />}
+      {isModal && (
+        <Modal onClose={handleCloseModal} largeImage={largeImageURL} />
+      )}
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={true}
+        rtl={false}
+        draggable
+        pauseOnHover={false}
+        theme="colored"
+      />
+    </>
+  );
+};
+
 export default App;
